@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>SkillRush Game</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial;
+      background: #111;
+      color: white;
+    }
+
+    .header {
+      background: #ff9800;
+      text-align: center;
+      padding: 15px;
+      font-size: 20px;
+      font-weight: bold;
+    }
+
+    .container {
+      padding: 15px;
+    }
+
+    .card {
+      background: #1e1e1e;
+      padding: 15px;
+      margin-bottom: 12px;
+      border-radius: 10px;
+    }
+
+    button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 8px;
+      border: none;
+      border-radius: 6px;
+      background: #ff9800;
+      color: black;
+      font-weight: bold;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 10px;
+      margin-top: 8px;
+      border-radius: 6px;
+      border: none;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .scoreboard {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .player {
+      background: #333;
+      padding: 10px;
+      border-radius: 8px;
+      text-align: center;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="header">
+  SkillRush Multiplayer Game 🎮
+</div>
+
+<div class="container">
+
+  <!-- SETUP -->
+  <div class="card" id="setup">
+    <h3>Enter Player Names 👥</h3>
+
+    <input id="p1" placeholder="Player 1">
+    <input id="p2" placeholder="Player 2">
+    <input id="p3" placeholder="Player 3">
+    <input id="p4" placeholder="Player 4">
+
+    <button onclick="startGame()">Start Game</button>
+  </div>
+
+  <!-- GAME -->
+  <div class="card hidden" id="game">
+
+    <h3 id="turnText">Turn</h3>
+
+    <label>Select Category:</label>
+    <select id="category">
+      <option>Grade 1-6 Math</option>
+      <option>Grade 7-10 Science</option>
+      <option>Senior High Research</option>
+      <option>College Capstone</option>
+    </select>
+
+    <p id="question"></p>
+
+    <input id="answer" placeholder="Your answer">
+
+    <button onclick="checkAnswer()">Submit Answer</button>
+
+    <p id="result"></p>
+
+    <div class="scoreboard">
+      <div class="player" id="s1"></div>
+      <div class="player" id="s2"></div>
+      <div class="player" id="s3"></div>
+      <div class="player" id="s4"></div>
+    </div>
+
+    <button onclick="nextTurn()">Next Turn ➡</button>
+
+  </div>
+
+</div>
+
+<script>
+
+let players = [];
+let scores = [0,0,0,0];
+let turn = 0;
+
+let questions = {
+  "Grade 1-6 Math": {
+    q: "What is 10 + 5?",
+    a: "15"
+  },
+  "Grade 7-10 Science": {
+    q: "What planet do we live on?",
+    a: "earth"
+  },
+  "Senior High Research": {
+    q: "What is the first step in research?",
+    a: "problem"
+  },
+  "College Capstone": {
+    q: "What is capstone project?",
+    a: "final project"
+  }
+};
+
+function startGame() {
+  players = [
+    document.getElementById("p1").value || "P1",
+    document.getElementById("p2").value || "P2",
+    document.getElementById("p3").value || "P3",
+    document.getElementById("p4").value || "P4"
+  ];
+
+  document.getElementById("setup").classList.add("hidden");
+  document.getElementById("game").classList.remove("hidden");
+
+  updateTurn();
+  updateScores();
+}
+
+function updateTurn() {
+  document.getElementById("turnText").innerHTML =
+    "🎮 " + players[turn] + "'s Turn";
+}
+
+function checkAnswer() {
+  let cat = document.getElementById("category").value;
+  let ans = document.getElementById("answer").value.toLowerCase();
+
+  document.getElementById("question").innerHTML =
+    questions[cat].q;
+
+  if(ans == questions[cat].a) {
+    scores[turn] += 10;
+    document.getElementById("result").innerHTML = "Correct 🎉 +10 points";
+  } else {
+    document.getElementById("result").innerHTML = "Wrong ❌";
+  }
+
+  updateScores();
+}
+
+function nextTurn() {
+  turn = (turn + 1) % 4;
+  updateTurn();
+
+  let cat = document.getElementById("category").value;
+  document.getElementById("question").innerHTML =
+    questions[cat].q;
+
+  document.getElementById("answer").value = "";
+  document.getElementById("result").innerHTML = "";
+}
+
+function updateScores() {
+  document.getElementById("s1").innerHTML = players[0] + ": " + scores[0];
+  document.getElementById("s2").innerHTML = players[1] + ": " + scores[1];
+  document.getElementById("s3").innerHTML = players[2] + ": " + scores[2];
+  document.getElementById("s4").innerHTML = players[3] + ": " + scores[3];
+}
+
+</script>
+
+</body>
+</html>
