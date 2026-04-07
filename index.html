@@ -1,208 +1,289 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>SkillRush Game</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SkillRush Pro</title>
 
-  <style>
-    body {
-      margin: 0;
-      font-family: Arial;
-      background: #111;
-      color: white;
-    }
+<style>
+body {
+  margin: 0;
+  font-family: Arial;
+  background: linear-gradient(135deg, #0f172a, #1e3a8a);
+  color: white;
+  text-align: center;
+}
 
-    .header {
-      background: #ff9800;
-      text-align: center;
-      padding: 15px;
-      font-size: 20px;
-      font-weight: bold;
-    }
+.container { padding: 15px; }
 
-    .container {
-      padding: 15px;
-    }
+h1 { color: #38bdf8; }
 
-    .card {
-      background: #1e1e1e;
-      padding: 15px;
-      margin-bottom: 12px;
-      border-radius: 10px;
-    }
+.card {
+  background: rgba(255,255,255,0.08);
+  padding: 15px;
+  margin: 10px;
+  border-radius: 15px;
+  backdrop-filter: blur(10px);
+}
 
-    button {
-      width: 100%;
-      padding: 10px;
-      margin-top: 8px;
-      border: none;
-      border-radius: 6px;
-      background: #ff9800;
-      color: black;
-      font-weight: bold;
-    }
+input, select, button {
+  padding: 10px;
+  margin: 6px;
+  width: 85%;
+  border-radius: 10px;
+  border: none;
+}
 
-    input, select {
-      width: 100%;
-      padding: 10px;
-      margin-top: 8px;
-      border-radius: 6px;
-      border: none;
-    }
+button {
+  background: #38bdf8;
+  font-weight: bold;
+  cursor: pointer;
+}
 
-    .hidden {
-      display: none;
-    }
+button:hover {
+  background: #0ea5e9;
+}
 
-    .scoreboard {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-      margin-top: 10px;
-    }
+.hidden { display: none; }
 
-    .player {
-      background: #333;
-      padding: 10px;
-      border-radius: 8px;
-      text-align: center;
-    }
-  </style>
+.badge {
+  padding: 5px 10px;
+  background: gold;
+  color: black;
+  border-radius: 10px;
+  display: inline-block;
+  margin: 5px;
+}
+</style>
 </head>
 
 <body>
 
-<div class="header">
-  SkillRush Multiplayer Game 🎮
-</div>
-
 <div class="container">
 
-  <!-- SETUP -->
-  <div class="card" id="setup">
-    <h3>Enter Player Names 👥</h3>
+<h1>🎮 SkillRush PRO</h1>
 
-    <input id="p1" placeholder="Player 1">
-    <input id="p2" placeholder="Player 2">
-    <input id="p3" placeholder="Player 3">
-    <input id="p4" placeholder="Player 4">
-
-    <button onclick="startGame()">Start Game</button>
-  </div>
-
-  <!-- GAME -->
-  <div class="card hidden" id="game">
-
-    <h3 id="turnText">Turn</h3>
-
-    <label>Select Category:</label>
-    <select id="category">
-      <option>Grade 1-6 Math</option>
-      <option>Grade 7-10 Science</option>
-      <option>Senior High Research</option>
-      <option>College Capstone</option>
+<!-- LOGIN -->
+<div id="login">
+  <div class="card">
+    <h3>Create Player</h3>
+    <input id="name" placeholder="Username">
+    <select id="grade">
+      <option>Grade 1-3</option>
+      <option>Grade 4-6</option>
+      <option>Junior High</option>
+      <option>Senior High</option>
+      <option>College</option>
     </select>
-
-    <p id="question"></p>
-
-    <input id="answer" placeholder="Your answer">
-
-    <button onclick="checkAnswer()">Submit Answer</button>
-
-    <p id="result"></p>
-
-    <div class="scoreboard">
-      <div class="player" id="s1"></div>
-      <div class="player" id="s2"></div>
-      <div class="player" id="s3"></div>
-      <div class="player" id="s4"></div>
-    </div>
-
-    <button onclick="nextTurn()">Next Turn ➡</button>
-
+    <button onclick="start()">Start Game</button>
   </div>
+</div>
+
+<!-- DASHBOARD -->
+<div id="home" class="hidden">
+
+  <div class="card">
+    <h3 id="welcome"></h3>
+    <div class="badge" id="levelBadge">Level: Easy</div>
+  </div>
+
+  <div class="card">
+    <button onclick="quizGame()">📘 Quiz Battle</button>
+    <button onclick="puzzleGame()">🧩 Puzzle Rush</button>
+    <button onclick="showBoard()">🏆 Leaderboard</button>
+  </div>
+
+  <div id="game" class="card"></div>
+
+</div>
 
 </div>
 
 <script>
 
-let players = [];
-let scores = [0,0,0,0];
-let turn = 0;
+// SOUND EFFECTS
+function sound(type){
+  let ctx = new (window.AudioContext || window.webkitAudioContext)();
+  let o = ctx.createOscillator();
+  o.type = "sine";
+  o.frequency.value = type === "correct" ? 800 : 200;
+  o.connect(ctx.destination);
+  o.start();
+  setTimeout(()=>o.stop(),150);
+}
 
-let questions = {
-  "Grade 1-6 Math": {
-    q: "What is 10 + 5?",
-    a: "15"
-  },
-  "Grade 7-10 Science": {
-    q: "What planet do we live on?",
-    a: "earth"
-  },
-  "Senior High Research": {
-    q: "What is the first step in research?",
-    a: "problem"
-  },
-  "College Capstone": {
-    q: "What is capstone project?",
-    a: "final project"
+// PLAYER DATA
+let player = {};
+let score = 0;
+
+// LOAD PLAYERS
+let players = JSON.parse(localStorage.getItem("players") || "[]");
+
+// START GAME
+function start(){
+  let name = document.getElementById("name").value;
+  let grade = document.getElementById("grade").value;
+
+  if(!name) return alert("Enter name");
+
+  player = {name, grade, score:0};
+
+  document.getElementById("login").classList.add("hidden");
+  document.getElementById("home").classList.remove("hidden");
+
+  document.getElementById("welcome").innerText =
+    "Welcome " + name;
+
+  setLevel(grade);
+}
+
+// LEVEL SYSTEM
+function setLevel(grade){
+  let level = "Easy";
+
+  if(grade === "Grade 4-6") level = "Easy";
+  if(grade === "Junior High") level = "Medium";
+  if(grade === "Senior High") level = "Hard";
+  if(grade === "College") level = "Hard";
+
+  document.getElementById("levelBadge").innerText = "Level: " + level;
+}
+
+// QUIZ GAME
+let qIndex = 0;
+
+let questions = [
+  {q:"5 + 5 = ?", a:"10"},
+  {q:"12 ÷ 4 = ?", a:"3"},
+  {q:"Capital of Philippines?", a:"manila"},
+  {q:"Earth is a planet (yes/no)", a:"yes"},
+  {q:"2 x 9 = ?", a:"18"},
+  {q:"Sun is a star (yes/no)", a:"yes"},
+  {q:"Water formula?", a:"h2o"},
+  {q:"10 - 7 = ?", a:"3"},
+  {q:"Largest ocean?", a:"pacific"},
+  {q:"100 + 100 = ?", a:"200"}
+];
+
+function quizGame(){
+  qIndex = 0;
+  score = 0;
+  nextQ();
+}
+
+function nextQ(){
+  if(qIndex >= questions.length){
+    endGame("Quiz");
+    return;
   }
-};
 
-function startGame() {
-  players = [
-    document.getElementById("p1").value || "P1",
-    document.getElementById("p2").value || "P2",
-    document.getElementById("p3").value || "P3",
-    document.getElementById("p4").value || "P4"
-  ];
+  let q = questions[qIndex];
 
-  document.getElementById("setup").classList.add("hidden");
-  document.getElementById("game").classList.remove("hidden");
-
-  updateTurn();
-  updateScores();
+  document.getElementById("game").innerHTML = `
+    <h3>${q.q}</h3>
+    <input id="ans">
+    <button onclick="checkQ()">Submit</button>
+  `;
 }
 
-function updateTurn() {
-  document.getElementById("turnText").innerHTML =
-    "🎮 " + players[turn] + "'s Turn";
-}
+function checkQ(){
+  let ans = document.getElementById("ans").value.toLowerCase();
 
-function checkAnswer() {
-  let cat = document.getElementById("category").value;
-  let ans = document.getElementById("answer").value.toLowerCase();
-
-  document.getElementById("question").innerHTML =
-    questions[cat].q;
-
-  if(ans == questions[cat].a) {
-    scores[turn] += 10;
-    document.getElementById("result").innerHTML = "Correct 🎉 +10 points";
+  if(ans === questions[qIndex].a){
+    score += 10;
+    sound("correct");
   } else {
-    document.getElementById("result").innerHTML = "Wrong ❌";
+    sound("wrong");
   }
 
-  updateScores();
+  qIndex++;
+  nextQ();
 }
 
-function nextTurn() {
-  turn = (turn + 1) % 4;
-  updateTurn();
+// PUZZLE GAME
+let puzzles = [
+  {w:"JAVASCRIPT", hint:"Web language"},
+  {w:"COMPUTER", hint:"Digital machine"},
+  {w:"INTERNET", hint:"Global network"},
+  {w:"ANDROID", hint:"Mobile OS"},
+  {w:"EDUCATION", hint:"Learning system"}
+];
 
-  let cat = document.getElementById("category").value;
-  document.getElementById("question").innerHTML =
-    questions[cat].q;
+let pIndex = 0;
 
-  document.getElementById("answer").value = "";
-  document.getElementById("result").innerHTML = "";
+function puzzleGame(){
+  pIndex = 0;
+  score = 0;
+  showPuzzle();
 }
 
-function updateScores() {
-  document.getElementById("s1").innerHTML = players[0] + ": " + scores[0];
-  document.getElementById("s2").innerHTML = players[1] + ": " + scores[1];
-  document.getElementById("s3").innerHTML = players[2] + ": " + scores[2];
-  document.getElementById("s4").innerHTML = players[3] + ": " + scores[3];
+function scramble(word){
+  return word.split("").sort(()=>Math.random()-0.5).join("");
+}
+
+function showPuzzle(){
+  if(pIndex >= puzzles.length){
+    endGame("Puzzle");
+    return;
+  }
+
+  let p = puzzles[pIndex];
+
+  document.getElementById("game").innerHTML = `
+    <h3>Guess the Word</h3>
+    <p>Hint: ${p.hint}</p>
+    <h2>${scramble(p.w)}</h2>
+    <input id="pans">
+    <button onclick="checkP()">Answer</button>
+  `;
+}
+
+function checkP(){
+  let ans = document.getElementById("pans").value.toUpperCase();
+
+  if(ans === puzzles[pIndex].w){
+    score += 15;
+    sound("correct");
+  } else {
+    sound("wrong");
+  }
+
+  pIndex++;
+  showPuzzle();
+}
+
+// END GAME + SAVE
+function endGame(type){
+
+  player.score += score;
+
+  players.push({
+    name: player.name,
+    grade: player.grade,
+    score: player.score,
+    type: type
+  });
+
+  localStorage.setItem("players", JSON.stringify(players));
+
+  document.getElementById("game").innerHTML = `
+    <h2>🎉 ${type} Finished!</h2>
+    <h3>Score: ${score}</h3>
+  `;
+}
+
+// LEADERBOARD
+function showBoard(){
+
+  let sorted = players.sort((a,b)=>b.score-a.score);
+
+  let list = sorted.map(p =>
+    `<p>${p.name} - ${p.grade} - ⭐ ${p.score}</p>`
+  ).join("");
+
+  document.getElementById("game").innerHTML = `
+    <h3>🏆 Leaderboard</h3>
+    ${list}
+  `;
 }
 
 </script>
