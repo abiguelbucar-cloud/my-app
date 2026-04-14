@@ -2,287 +2,196 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SkillRush PRO+</title>
+<title>SkillRush</title>
 
 <style>
-body {
-  margin: 0;
-  font-family: Arial;
-  background: linear-gradient(135deg, #0f172a, #1e40af);
-  color: white;
-  text-align: center;
+body{
+    margin:0;
+    font-family:Arial;
+    background:linear-gradient(135deg,#1e3a8a,#0f172a);
+    color:white;
+    text-align:center;
 }
+.screen{display:none;padding:20px;}
+.active{display:block;}
 
-.container { padding: 15px; }
-
-h1 { color: #38bdf8; }
-
-.card {
-  background: rgba(255,255,255,0.08);
-  padding: 15px;
-  margin: 10px;
-  border-radius: 15px;
-  backdrop-filter: blur(12px);
-  box-shadow: 0 0 15px rgba(0,0,0,0.4);
+button{
+    padding:12px;
+    margin:10px;
+    border:none;
+    border-radius:10px;
+    background:#22c55e;
+    color:white;
+    font-size:16px;
 }
-
-input, select, button {
-  padding: 10px;
-  margin: 6px;
-  width: 85%;
-  border-radius: 10px;
-  border: none;
+input{
+    padding:10px;
+    margin:10px;
+    border-radius:8px;
+    border:none;
 }
-
-button {
-  background: linear-gradient(45deg,#38bdf8,#0ea5e9);
-  font-weight: bold;
-  cursor: pointer;
-  color:white;
+.card{
+    background:white;
+    color:black;
+    padding:15px;
+    border-radius:15px;
+    margin:10px;
 }
-
-button:hover {
-  transform: scale(1.05);
+.progress{
+    height:10px;
+    background:#ddd;
+    border-radius:10px;
 }
-
-.hidden { display: none; }
-
-.badge {
-  padding: 5px 10px;
-  background: gold;
-  color: black;
-  border-radius: 10px;
-  display: inline-block;
-  margin: 5px;
-}
-
-.playerBox {
-  background: rgba(255,255,255,0.1);
-  padding:10px;
-  margin:5px;
-  border-radius:10px;
-}
-.active {
-  border: 2px solid #38bdf8;
+.bar{
+    height:10px;
+    background:#22c55e;
+    border-radius:10px;
 }
 </style>
 </head>
 
 <body>
 
-<div class="container">
-
-<h1>🎮 SkillRush PRO+</h1>
-
-<!-- SETUP -->
-<div id="setup">
-  <div class="card">
-    <h3>Enter 4 Players</h3>
-    <input id="p1" placeholder="Player 1">
-    <input id="p2" placeholder="Player 2">
-    <input id="p3" placeholder="Player 3">
-    <input id="p4" placeholder="Player 4">
-    <button onclick="start()">Start Game</button>
-  </div>
+<!-- SPLASH -->
+<div id="splash" class="screen active">
+    <h1>🎓 SkillRush</h1>
+    <p>Learn • Play • Grow</p>
+    <button onclick="show('login')">Start</button>
 </div>
 
-<!-- GAME -->
-<div id="home" class="hidden">
-
-  <div id="playersUI" class="card"></div>
-
-  <div class="card">
-    <button onclick="quizGame()">📘 Quiz</button>
-    <button onclick="puzzleGame()">🧩 Puzzle</button>
-    <button onclick="showBoard()">🏆 Leaderboard</button>
-  </div>
-
-  <div id="game" class="card"></div>
-
+<!-- LOGIN -->
+<div id="login" class="screen">
+    <h2>Login</h2>
+    <input placeholder="Username"><br>
+    <input type="password" placeholder="Password"><br>
+    <button onclick="show('menu')">Login</button>
 </div>
 
+<!-- MENU -->
+<div id="menu" class="screen">
+    <h2>Select Academic Level</h2>
+    <button onclick="selectLevel('Elementary - Math')">Elementary - Math</button><br>
+    <button onclick="selectLevel('Secondary - Science')">Secondary - Science</button><br>
+    <button onclick="selectLevel('Senior High - Research')">Senior High - Research</button><br>
+    <button onclick="selectLevel('College - Capstone')">College - Capstone</button>
+</div>
+
+<!-- QUIZ -->
+<div id="quiz" class="screen">
+    <h3 id="levelTitle"></h3>
+    <div class="progress">
+        <div id="progressBar" class="bar" style="width:0%"></div>
+    </div>
+
+    <div class="card">
+        <h3 id="question"></h3>
+        <div id="answers"></div>
+    </div>
+</div>
+
+<!-- RESULT -->
+<div id="result" class="screen">
+    <h2>Result</h2>
+    <h3 id="scoreText"></h3>
+    <p id="feedback"></p>
+
+    <h4>🏆 Rewards</h4>
+    <p id="reward"></p>
+
+    <button onclick="startQuiz()">Retry</button>
+    <button onclick="show('menu')">New Level</button>
 </div>
 
 <script>
-
-// SOUND
-function sound(type){
-  let ctx = new (window.AudioContext || window.webkitAudioContext)();
-  let o = ctx.createOscillator();
-  o.type = "square";
-  o.frequency.value = type === "correct" ? 900 : 200;
-  o.connect(ctx.destination);
-  o.start();
-  setTimeout(()=>o.stop(),150);
-}
-
-// PLAYERS
-let players = [];
+let questions = [];
 let current = 0;
 let score = 0;
+let level = "";
 
-// START
-function start(){
-  let p1 = document.getElementById("p1").value;
-  let p2 = document.getElementById("p2").value;
-  let p3 = document.getElementById("p3").value;
-  let p4 = document.getElementById("p4").value;
-
-  if(!p1 || !p2 || !p3 || !p4){
-    alert("Enter all 4 players");
-    return;
-  }
-
-  players = [
-    {name:p1, score:0},
-    {name:p2, score:0},
-    {name:p3, score:0},
-    {name:p4, score:0}
-  ];
-
-  document.getElementById("setup").classList.add("hidden");
-  document.getElementById("home").classList.remove("hidden");
-
-  updatePlayersUI();
+// generate 30 simple questions
+function generateQuestions(){
+    questions = [];
+    for(let i=1;i<=30;i++){
+        let a = Math.floor(Math.random()*10);
+        let b = Math.floor(Math.random()*10);
+        questions.push({
+            q: "Question "+i+": "+a+" + "+b+" = ?",
+            options:[a+b, a+b+1, a+b-1],
+            answer:a+b
+        });
+    }
 }
 
-// SHOW PLAYERS
-function updatePlayersUI(){
-  let html = players.map((p,i)=>`
-    <div class="playerBox ${i===current?'active':''}">
-      ${p.name} ⭐ ${p.score}
-    </div>
-  `).join("");
-
-  document.getElementById("playersUI").innerHTML = html;
+function show(id){
+    document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
 }
 
-// SWITCH PLAYER
-function nextPlayer(){
-  current = (current + 1) % 4;
-  updatePlayersUI();
+function selectLevel(lvl){
+    level = lvl;
+    startQuiz();
 }
 
-// QUESTIONS
-let questions = [
-  {q:"5 + 5 = ?", a:"10"},
-  {q:"Capital of Philippines?", a:"manila"},
-  {q:"2 x 9 = ?", a:"18"},
-  {q:"Water formula?", a:"h2o"}
-];
-
-let qIndex = 0;
-
-function quizGame(){
-  qIndex = 0;
-  score = 0;
-  nextQ();
+function startQuiz(){
+    generateQuestions();
+    current = 0;
+    score = 0;
+    document.getElementById("levelTitle").innerText = level;
+    show('quiz');
+    loadQuestion();
 }
 
-function nextQ(){
-  if(qIndex >= questions.length){
-    endGame("Quiz");
-    return;
-  }
+function loadQuestion(){
+    let q = questions[current];
+    document.getElementById("question").innerText = q.q;
 
-  let q = questions[qIndex];
+    let ansDiv = document.getElementById("answers");
+    ansDiv.innerHTML = "";
 
-  document.getElementById("game").innerHTML = `
-    <h3>${players[current].name}'s Turn</h3>
-    <h2>${q.q}</h2>
-    <input id="ans">
-    <button onclick="checkQ()">Submit</button>
-  `;
+    q.options.forEach(opt=>{
+        let btn = document.createElement("button");
+        btn.innerText = opt;
+        btn.onclick = ()=>checkAnswer(opt);
+        ansDiv.appendChild(btn);
+    });
+
+    let progress = ((current)/30)*100;
+    document.getElementById("progressBar").style.width = progress+"%";
 }
 
-function checkQ(){
-  let ans = document.getElementById("ans").value.toLowerCase();
+function checkAnswer(ans){
+    if(ans === questions[current].answer){
+        score++;
+    }
+    current++;
 
-  if(ans === questions[qIndex].a){
-    players[current].score += 10;
-    sound("correct");
-  } else {
-    sound("wrong");
-  }
-
-  qIndex++;
-  nextPlayer();
-  nextQ();
+    if(current < 30){
+        loadQuestion();
+    }else{
+        showResult();
+    }
 }
 
-// PUZZLES
-let puzzles = [
-  {w:"JAVASCRIPT", hint:"Web language"},
-  {w:"ANDROID", hint:"Mobile OS"},
-  {w:"COMPUTER", hint:"Digital machine"}
-];
+function showResult(){
+    show('result');
+    document.getElementById("scoreText").innerText = 
+        "Final Score: "+score+"/30";
 
-let pIndex = 0;
+    let feedback = score >= 20 ? "Excellent!" : "Keep practicing!";
+    document.getElementById("feedback").innerText = feedback;
 
-function puzzleGame(){
-  pIndex = 0;
-  showPuzzle();
+    // gamification
+    let reward = "";
+    if(score >= 25){
+        reward = "🏅 Gold Badge + Level Up!";
+    }else if(score >= 15){
+        reward = "🥈 Silver Badge";
+    }else{
+        reward = "🥉 Bronze Badge";
+    }
+
+    document.getElementById("reward").innerText = reward;
 }
-
-function scramble(word){
-  return word.split("").sort(()=>Math.random()-0.5).join("");
-}
-
-function showPuzzle(){
-  if(pIndex >= puzzles.length){
-    endGame("Puzzle");
-    return;
-  }
-
-  let p = puzzles[pIndex];
-
-  document.getElementById("game").innerHTML = `
-    <h3>${players[current].name}'s Turn</h3>
-    <p>${p.hint}</p>
-    <h2>${scramble(p.w)}</h2>
-    <input id="pans">
-    <button onclick="checkP()">Answer</button>
-  `;
-}
-
-function checkP(){
-  let ans = document.getElementById("pans").value.toUpperCase();
-
-  if(ans === puzzles[pIndex].w){
-    players[current].score += 15;
-    sound("correct");
-  } else {
-    sound("wrong");
-  }
-
-  pIndex++;
-  nextPlayer();
-  showPuzzle();
-}
-
-// END GAME
-function endGame(type){
-  updatePlayersUI();
-
-  document.getElementById("game").innerHTML = `
-    <h2>🎉 ${type} Finished!</h2>
-  `;
-}
-
-// LEADERBOARD
-function showBoard(){
-  let sorted = [...players].sort((a,b)=>b.score-a.score);
-
-  let list = sorted.map(p =>
-    `<p>${p.name} ⭐ ${p.score}</p>`
-  ).join("");
-
-  document.getElementById("game").innerHTML = `
-    <h3>🏆 Leaderboard</h3>
-    ${list}
-  `;
-}
-
 </script>
 
 </body>
