@@ -1,197 +1,319 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SkillRush</title>
+<title>SkillRush ML Timer Levels</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
 
 <style>
 body{
-    margin:0;
-    font-family:Arial;
-    background:linear-gradient(135deg,#1e3a8a,#0f172a);
-    color:white;
-    text-align:center;
+  font-family:Arial;
+  background:radial-gradient(circle at top,#1e3a8a,#0f172a,#000);
+  color:white;
 }
-.screen{display:none;padding:20px;}
-.active{display:block;}
 
-button{
-    padding:12px;
-    margin:10px;
-    border:none;
-    border-radius:10px;
-    background:#22c55e;
-    color:white;
-    font-size:16px;
-}
-input{
-    padding:10px;
-    margin:10px;
-    border-radius:8px;
-    border:none;
-}
 .card{
-    background:white;
-    color:black;
-    padding:15px;
-    border-radius:15px;
-    margin:10px;
+  background:rgba(255,255,255,0.08);
+  backdrop-filter:blur(20px);
+  border-radius:22px;
+  padding:20px;
+  box-shadow:0 0 30px rgba(59,130,246,0.3);
 }
-.progress{
-    height:10px;
-    background:#ddd;
-    border-radius:10px;
+
+.hidden{display:none;}
+
+.input{
+  width:100%;
+  padding:10px;
+  margin:5px 0;
+  border-radius:10px;
+  color:black;
 }
+
+.btn{
+  width:100%;
+  padding:12px;
+  margin-top:8px;
+  border-radius:12px;
+  font-weight:bold;
+}
+
+.option{
+  padding:12px;
+  margin:6px 0;
+  width:100%;
+  border-radius:12px;
+  background:white;
+  color:black;
+  font-weight:bold;
+  cursor:pointer;
+}
+
+.option:hover{background:#fde047;}
+
+.correct{background:#22c55e !important; color:white;}
+.wrong{background:#ef4444 !important; color:white;}
+
 .bar{
-    height:10px;
-    background:#22c55e;
-    border-radius:10px;
+  height:10px;
+  background:rgba(255,255,255,0.2);
+  border-radius:10px;
+  overflow:hidden;
+}
+
+.bar-fill{
+  height:10px;
+  width:0%;
+  background:linear-gradient(90deg,#facc15,#22c55e,#3b82f6);
+  transition:0.4s;
+}
+
+.timer{
+  text-align:right;
+  font-weight:bold;
+  color:#facc15;
 }
 </style>
 </head>
 
-<body>
+<body class="flex justify-center items-center min-h-screen p-4">
 
-<!-- SPLASH -->
-<div id="splash" class="screen active">
-    <h1>🎓 SkillRush</h1>
-    <p>Learn • Play • Grow</p>
-    <button onclick="show('login')">Start</button>
-</div>
+<div class="w-full max-w-xl card">
 
 <!-- LOGIN -->
-<div id="login" class="screen">
-    <h2>Login</h2>
-    <input placeholder="Username"><br>
-    <input type="password" placeholder="Password"><br>
-    <button onclick="show('menu')">Login</button>
+<div id="login">
+<h1 class="text-3xl font-bold text-center text-yellow-300">🚀 SkillRush TIMER</h1>
+
+<input id="p1" class="input" placeholder="Player 1">
+<input id="p2" class="input" placeholder="Player 2">
+<input id="p3" class="input" placeholder="Player 3">
+<input id="p4" class="input" placeholder="Player 4">
+
+<button onclick="startGame()" class="btn bg-green-500">START</button>
 </div>
 
-<!-- MENU -->
-<div id="menu" class="screen">
-    <h2>Select Academic Level</h2>
-    <button onclick="selectLevel('Elementary - Math')">Elementary - Math</button><br>
-    <button onclick="selectLevel('Secondary - Science')">Secondary - Science</button><br>
-    <button onclick="selectLevel('Senior High - Research')">Senior High - Research</button><br>
-    <button onclick="selectLevel('College - Capstone')">College - Capstone</button>
+<!-- LEVEL -->
+<div id="level" class="hidden text-center">
+<h2 class="text-xl mb-3">Select Level</h2>
+
+<button onclick="start('Elementary')" class="btn bg-green-500">📘 Elementary - Math</button>
+<button onclick="start('Secondary')" class="btn bg-blue-500">🔬 Secondary - Science</button>
+<button onclick="start('Senior')" class="btn bg-purple-500">🧪 Senior High - Research</button>
+<button onclick="start('College')" class="btn bg-red-500">🎓 College - Capstone</button>
 </div>
 
-<!-- QUIZ -->
-<div id="quiz" class="screen">
-    <h3 id="levelTitle"></h3>
-    <div class="progress">
-        <div id="progressBar" class="bar" style="width:0%"></div>
-    </div>
+<!-- GAME -->
+<div id="game" class="hidden">
 
-    <div class="card">
-        <h3 id="question"></h3>
-        <div id="answers"></div>
-    </div>
+<div class="flex justify-between">
+<div id="turn"></div>
+<div id="timer" class="timer">10</div>
+</div>
+
+<div class="bar mt-2 mb-3">
+<div id="bar" class="bar-fill"></div>
+</div>
+
+<h2 id="q" class="text-xl font-bold text-center mb-4"></h2>
+
+<div id="options"></div>
+
+<div id="feedback" class="text-center mt-3 text-sm opacity-80"></div>
+
 </div>
 
 <!-- RESULT -->
-<div id="result" class="screen">
-    <h2>Result</h2>
-    <h3 id="scoreText"></h3>
-    <p id="feedback"></p>
+<div id="result" class="hidden text-center">
+<h1 class="text-3xl">🏆 WINNER</h1>
+<h2 id="winner" class="text-yellow-300 text-2xl"></h2>
+</div>
 
-    <h4>🏆 Rewards</h4>
-    <p id="reward"></p>
-
-    <button onclick="startQuiz()">Retry</button>
-    <button onclick="show('menu')">New Level</button>
 </div>
 
 <script>
-let questions = [];
-let current = 0;
-let score = 0;
-let level = "";
 
-// generate 30 simple questions
+let names=[];
+let scores=[0,0,0,0];
+let turn=0;
+let qIndex=0;
+let questions=[];
+let time=10;
+let timer;
+let level="";
+
+/* START */
+function startGame(){
+
+names=[
+document.getElementById("p1").value||"P1",
+document.getElementById("p2").value||"P2",
+document.getElementById("p3").value||"P3",
+document.getElementById("p4").value||"P4"
+];
+
+document.getElementById("login").classList.add("hidden");
+document.getElementById("level").classList.remove("hidden");
+}
+
+/* LEVEL START */
+function start(lv){
+
+level=lv;
+
+document.getElementById("level").classList.add("hidden");
+document.getElementById("game").classList.remove("hidden");
+
+questions=[];
+qIndex=0;
+turn=0;
+scores=[0,0,0,0];
+
+generateQuestions();
+show();
+startTimer();
+}
+
+/* QUESTIONS PER LEVEL (30 each) */
 function generateQuestions(){
-    questions = [];
-    for(let i=1;i<=30;i++){
-        let a = Math.floor(Math.random()*10);
-        let b = Math.floor(Math.random()*10);
-        questions.push({
-            q: "Question "+i+": "+a+" + "+b+" = ?",
-            options:[a+b, a+b+1, a+b-1],
-            answer:a+b
-        });
-    }
+
+let base={
+Elementary:[
+{q:"5 + 5",a:"10",o:["10","9","11","12"]},
+{q:"3 + 2",a:"5",o:["5","6","4","7"]},
+{q:"10 - 2",a:"8",o:["8","7","9","6"]},
+{q:"4 + 4",a:"8",o:["8","9","7","6"]}
+],
+
+Secondary:[
+{q:"H2O is",a:"Water",o:["Water","Oxygen","Salt","Iron"]},
+{q:"Sun is a",a:"Star",o:["Star","Planet","Moon","Comet"]},
+{q:"Earth is",a:"Planet",o:["Planet","Rock","Gas","Ice"]},
+{q:"Oxygen is used for",a:"Breathing",o:["Breathing","Eating","Running","Sleeping"]}
+],
+
+Senior:[
+{q:"Hypothesis is",a:"Testable idea",o:["Testable idea","Guess","Answer","Story"]},
+{q:"Research tool",a:"Questionnaire",o:["Questionnaire","Phone","Book","Chair"]},
+{q:"Conclusion is",a:"Final result",o:["Final result","Start","Idea","Error"]}
+],
+
+College:[
+{q:"SDLC first step",a:"Planning",o:["Planning","Eating","Gaming","Sleeping"]},
+{q:"Testing finds",a:"Errors",o:["Errors","Money","Food","Time"]},
+{q:"Capstone goal",a:"Solution",o:["Solution","Problem","Game","Noise"]}
+]
+};
+
+let pool=base[level];
+
+for(let i=0;i<30;i++){
+let q=pool[i % pool.length];
+
+questions.push({
+q:q.q,
+a:q.a,
+o:shuffle([...q.o])
+});
+}
 }
 
-function show(id){
-    document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
-    document.getElementById(id).classList.add('active');
+function shuffle(a){
+return a.sort(()=>Math.random()-0.5);
 }
 
-function selectLevel(lvl){
-    level = lvl;
-    startQuiz();
+/* SHOW */
+function show(){
+
+if(qIndex>=30) return end();
+
+let q=questions[qIndex];
+
+document.getElementById("turn").innerText="🔥 "+names[turn]+"'s Turn";
+
+document.getElementById("bar").style.width=(qIndex/30)*100+"%";
+
+document.getElementById("q").innerText=q.q;
+
+document.getElementById("feedback").innerText="";
+
+let html="";
+q.o.forEach(opt=>{
+html+=`<button class="option" onclick="answer('${opt}',this)">${opt}</button>`;
+});
+
+document.getElementById("options").innerHTML=html;
+
+resetTimer();
 }
 
-function startQuiz(){
-    generateQuestions();
-    current = 0;
-    score = 0;
-    document.getElementById("levelTitle").innerText = level;
-    show('quiz');
-    loadQuestion();
+/* TIMER */
+function startTimer(){
+timer=setInterval(()=>{
+time--;
+document.getElementById("timer").innerText=time;
+
+if(time<=0){
+next();
+}
+},1000);
 }
 
-function loadQuestion(){
-    let q = questions[current];
-    document.getElementById("question").innerText = q.q;
-
-    let ansDiv = document.getElementById("answers");
-    ansDiv.innerHTML = "";
-
-    q.options.forEach(opt=>{
-        let btn = document.createElement("button");
-        btn.innerText = opt;
-        btn.onclick = ()=>checkAnswer(opt);
-        ansDiv.appendChild(btn);
-    });
-
-    let progress = ((current)/30)*100;
-    document.getElementById("progressBar").style.width = progress+"%";
+function resetTimer(){
+time=10;
+document.getElementById("timer").innerText=time;
 }
 
-function checkAnswer(ans){
-    if(ans === questions[current].answer){
-        score++;
-    }
-    current++;
+/* ANSWER */
+function answer(val,btn){
 
-    if(current < 30){
-        loadQuestion();
-    }else{
-        showResult();
-    }
+document.querySelectorAll(".option").forEach(b=>{
+b.style.pointerEvents="none";
+});
+
+if(val===questions[qIndex].a){
+btn.classList.add("correct");
+scores[turn]++;
+feedback("✔ Correct!");
+}else{
+btn.classList.add("wrong");
+feedback("✘ Wrong!");
 }
 
-function showResult(){
-    show('result');
-    document.getElementById("scoreText").innerText = 
-        "Final Score: "+score+"/30";
-
-    let feedback = score >= 20 ? "Excellent!" : "Keep practicing!";
-    document.getElementById("feedback").innerText = feedback;
-
-    // gamification
-    let reward = "";
-    if(score >= 25){
-        reward = "🏅 Gold Badge + Level Up!";
-    }else if(score >= 15){
-        reward = "🥈 Silver Badge";
-    }else{
-        reward = "🥉 Bronze Badge";
-    }
-
-    document.getElementById("reward").innerText = reward;
+setTimeout(()=>next(),600);
 }
+
+function feedback(msg){
+document.getElementById("feedback").innerText=
+names[turn]+": "+msg;
+}
+
+/* NEXT */
+function next(){
+
+turn++;
+if(turn>=4) turn=0;
+
+qIndex++;
+show();
+}
+
+/* RESULT */
+function end(){
+
+clearInterval(timer);
+
+document.getElementById("game").classList.add("hidden");
+document.getElementById("result").classList.remove("hidden");
+
+let max=Math.max(...scores);
+let winner=names[scores.indexOf(max)];
+
+document.getElementById("winner").innerText=
+"🏆 "+winner+" WINS!";
+}
+
 </script>
 
 </body>
